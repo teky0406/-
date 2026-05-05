@@ -1,43 +1,97 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <title>團險報名系統</title>
+<meta charset="UTF-8">
+<title>計分系統（低分獲勝）</title>
+<style>
+  body { font-family: Arial; padding: 20px; }
+  table { border-collapse: collapse; margin-top: 20px; }
+  td, th { border: 1px solid #ccc; padding: 8px; text-align: center; }
+  input { width: 60px; }
+  select { padding: 5px; }
+  .winner { background-color: #d4edda; }
+</style>
 </head>
 <body>
 
-<h2>團體保險報名表</h2>
+<h2>🎯 計分系統（低分獲勝）</h2>
 
-<form id="insuranceForm">
-  <label>公司名稱：</label><br>
-  <input type="text" name="company" required><br><br>
+人數：
+<select id="playerCount" onchange="initTable()">
+  <option value="4">4人</option>
+  <option value="5">5人</option>
+  <option value="6">6人</option>
+  <option value="7">7人</option>
+  <option value="8">8人</option>
+</select>
 
-  <label>統一編號：</label><br>
-  <input type="text" name="taxId" required><br><br>
-
-  <label>投保人數：</label><br>
-  <input type="number" name="people" required><br><br>
-
-  <label>職業編號：</label><br>
-  <input type="text" name="jobCode"><br><br>
-
-  <label>原投保壽險公司：</label><br>
-  <input type="text" name="insuranceCompany"><br><br>
-
-  <button type="submit">送出</button>
-</form>
+<table id="scoreTable"></table>
 
 <script>
-document.getElementById("insuranceForm").addEventListener("submit", function(e) {
-  e.preventDefault();
+const rounds = 5;
 
-  const formData = new FormData(this);
-  const data = Object.fromEntries(formData);
+function initTable() {
+  const count = parseInt(document.getElementById("playerCount").value);
+  const table = document.getElementById("scoreTable");
+  table.innerHTML = "";
 
-  console.log(data);
+  let header = "<tr><th>玩家</th>";
+  for (let r = 1; r <= rounds; r++) {
+    header += `<th>第${r}局</th>`;
+  }
+  header += "<th>總分</th><th>排名</th></tr>";
+  table.innerHTML += header;
 
-  alert("資料已送出！");
-});
+  for (let i = 0; i < count; i++) {
+    let row = `<tr id="row${i}">
+      <td>玩家${i+1}</td>`;
+
+    for (let r = 0; r < rounds; r++) {
+      row += `<td><input type="number" value="0" onchange="calculate()"></td>`;
+    }
+
+    row += `<td class="total">0</td>
+            <td class="rank">-</td>
+          </tr>`;
+
+    table.innerHTML += row;
+  }
+}
+
+function calculate() {
+  const rows = document.querySelectorAll("#scoreTable tr");
+  let scores = [];
+
+  for (let i = 1; i < rows.length; i++) {
+    let inputs = rows[i].querySelectorAll("input");
+    let total = 0;
+
+    inputs.forEach(input => {
+      total += parseInt(input.value) || 0;
+    });
+
+    rows[i].querySelector(".total").innerText = total;
+
+    scores.push({
+      index: i,
+      total: total
+    });
+  }
+
+  // 低分排序（重點）
+  scores.sort((a, b) => a.total - b.total);
+
+  scores.forEach((player, i) => {
+    let row = rows[player.index];
+    row.querySelector(".rank").innerText = i + 1;
+    row.classList.remove("winner");
+  });
+
+  // 第一名標綠
+  rows[scores[0].index].classList.add("winner");
+}
+
+initTable();
 </script>
 
 </body>
